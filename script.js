@@ -165,7 +165,7 @@ const showaddtocart = (addtocarts) => {
                         <p class="text-gray-300 py-2">${addtocart.price} x 1</p> 
                     </div>
                     <div>
-                        <button onclick="handledeletecart(${addtocart.id})" class="text-gray-300 cursor-pointer">delete</button>
+                        <button onclick="handledeletecart(${addtocarts, addtocart.id})" class="text-gray-300 cursor-pointer"> x</button>
                     </div>
                 </div>
 
@@ -177,9 +177,9 @@ const showaddtocart = (addtocarts) => {
 }
 
 const handledeletecart = (cardid) => {
-  // console.log(cardid);
+  console.log('button clicked', cardid);
   const filtereddata = addtocarts.filter(addtocart => addtocart.id !== cardid)
-  console.log(filtereddata);
+  
 
 }
 
