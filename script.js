@@ -1,216 +1,277 @@
-const cardcontainer = document.getElementById("card-container")
-const AddToCart = document.getElementById("AddToCarts")
 
-let addtocarts = []
-const loadCatagorie = (params) => {
-  fetch("https://openapi.programming-hero.com/api/categories")
-    .then(res => res.json())
-    .then((json) => displaycatagorie(json.categories));
-
-};
+const cardContainer = document.getElementById("card-container");
+const cartItemsContainer = document.getElementById("cart-items-container");
+const cartTotalElement = document.getElementById("cart-total");
 
 
 
-// Category
 
-const displaycatagorie = (categories) => {
-  const CategoriesContainer = document.getElementById("CategoriesContainer")
-  CategoriesContainer.innerHTML = "";
-
-  for (let catagorie of categories) {
+let cart = []; 
 
 
-    const catagorieLink = document.createElement("div")
-    catagorieLink.innerHTML = `
-   <a id="${catagorie.id}" class=" hover:bg-green-200 rounded-md cursor-pointer p-2">${catagorie.category_name}</a>
-   
-   `
-    CategoriesContainer.append(catagorieLink)
-  }
+function showSpinner() {
+    document.getElementById("loading-spinner").classList.add("show");
+}
 
-  CategoriesContainer.addEventListener('click', (e) => {
-    // all class remove
-    const alla = document.querySelectorAll('a')
-    alla.forEach(a => {
-      a.classList.remove('bg-[#15803D]')
-    })
-    // condition for only a
+function hideSpinner() {
+    document.getElementById("loading-spinner").classList.remove("show");
+}
 
-    if (e.target.localName === 'a') {
-      // console.log(e.target.id);
-      e.target.classList.add('bg-[#15803D]')
-      loadCardByCategorie(e.target.id)
+
+function loadCategories() {
+    showSpinner();
+
+    fetch("https://openapi.programming-hero.com/api/categories")
+        .then(res => res.json())
+        .then(data => {
+            hideSpinner();
+            displayCategories(data.categories);
+        })
+        .catch(err => {
+            hideSpinner();
+            console.log("Error loading categories:", err);
+        });
+}
+
+
+//  Display category buttons in the sidebar 
+
+function displayCategories(categories) {
+    const categoriesContainer = document.getElementById("CategoriesContainer");
+    categoriesContainer.innerHTML = ""; 
+
+    for (let cat of categories) {
+        const catDiv = document.createElement("div");
+        catDiv.innerHTML = `
+            <button 
+                id="cat-${cat.id}" 
+                onclick="loadCardsByCategory('${cat.id}')"
+                class="category-btn hover:bg-green-200 rounded-md cursor-pointer px-3 py-1 text-sm font-semibold text-left w-full transition">
+                ${cat.category_name}
+            </button>
+        `;
+        categoriesContainer.appendChild(catDiv);
+    }
+}
+
+
+function loadCardsByCategory(categoryId) {
+    showSpinner();
+
+    const allCatBtns = document.querySelectorAll(".category-btn");
+    allCatBtns.forEach(btn => btn.classList.remove("bg-[#15803D]", "text-white"));
+
+    const clickedBtn = document.getElementById("cat-" + categoryId);
+    if (clickedBtn) {
+        clickedBtn.classList.add("bg-[#15803D]", "text-white");
     }
 
-  })
-
-
-
+    fetch(`https://openapi.programming-hero.com/api/category/${categoryId}`)
+        .then(res => res.json())
+        .then(data => {
+            hideSpinner();
+            displayCards(data.plants); 
+        })
+        .catch(err => {
+            hideSpinner();
+            console.log("Error loading category cards:", err);
+        });
 }
 
-// Card with category
 
-const loadCardByCategorie = (id) => {
-  console.log(id);
+function loadAllCards() {
+    showSpinner();
 
-  fetch(`https://openapi.programming-hero.com/api/category/${id}`)
-    .then(res => res.json())
-    .then(data => {
-      // console.log(data.plants);
-      ShowcardByCategorie(data.plants)
-    })
-    .catch(err => {
-      console.log(err);
+    const allCatBtns = document.querySelectorAll(".category-btn");
+    allCatBtns.forEach(btn => btn.classList.remove("bg-[#15803D]", "text-white"));
 
-    })
+    fetch("https://openapi.programming-hero.com/api/plants")
+        .then(res => res.json())
+        .then(data => {
+            hideSpinner();
+            displayCards(data.plants); 
+        })
+        .catch(err => {
+            hideSpinner();
+            console.log("Error loading all cards:", err);
+        });
 }
 
-const ShowcardByCategorie = (plants) => {
-  // console.log(plants);
-  const plantsContainer = document.getElementById("card-container")
-  plantsContainer.innerHTML = "";
 
-  for (let plant of plants) {
-    const plantcards = document.createElement("div")
-    plantcards.innerHTML = `
-       <div class="h-[400px] w-[330px] border-4 rounded-lg border-none shadow-lg p-4">
-        <img class="h-[179px] w-[298px] rounded-md " src="${plant.image}" alt="">
-        <button class="font-semibold">${plant.name}</button>
-        <p class="text-[12px]">${plant.description}</p>
-        <div class="flex justify-between p-3">
-            <button onclick="" class="bg-[#DCFCE7] rounded-md p-1 text-[#15803D]">${plant.category}</button>
-            <P>$${plant.price}</P>
-        </div>
-        <button class="w-full bg-[#15803D] py-1 rounded-2xl text-white">Add to Cart</button>
-    </div>
+function displayCards(plants) {
+    cardContainer.innerHTML = ""; 
 
-    `
-    plantsContainer.append(plantcards)
-  }
-}
+    if (!plants || plants.length === 0) {
+        cardContainer.innerHTML = `<p class="col-span-3 text-center text-gray-400 py-10">No trees found.</p>`;
+        return;
+    }
 
-loadCatagorie()
-
-//  ALL CARD
-
-const loadcard = () => {
-  fetch("https://openapi.programming-hero.com/api/plants")
-    .then(res => res.json())
-    .then((data) => dislpayCard(data.plants));
-}
-
-const dislpayCard = (plants) => {
-  const cardcontainer = document.getElementById("card-container")
-  cardcontainer.innerHTML = "";
-  for (let plant of plants) {
-
-
-    const cards = document.createElement("div")
-    cards.innerHTML = `
-       <div id="${plant.id}" class="h-[400px] w-[330px] border-4 rounded-lg border-none shadow-lg p-4">
-        <img class="h-[179px] w-[298px] rounded-md " src="${plant.image}" alt="">
-        <button onclick="loadplantdetail(${plant.id})" class="font-semibold cursor-pointer mt-2">${plant.name}</button>
-        <p class="text-[12px]">${plant.description}</p>
-        <div class="flex justify-between p-3">
-            <button  class="bg-[#DCFCE7] rounded-md p-1 text-[#15803D]">${plant.category}</button>
-            <P>$${plant.price}</P>
-        </div>
-        <button class="w-full cursor-pointer bg-[#15803D] py-1 rounded-2xl text-white">Add to Cart</button>
-    </div>
-
-    `
-    cardcontainer.append(cards)
-  }
-}
-loadcard()
-
-cardcontainer.addEventListener('click', (e) => {
-  // console.log(e.target.innerText);
-  handleaddtocard(e)
-})
-
-const handleaddtocard = (e) => {
-  if (e.target.innerText === 'Add to Cart') {
-    // console.log("button clicked");
-    // console.log(e.target.parentNode.children[1].innerText);
-
-    const title = e.target.parentNode.children[1].innerText
-    const price = e.target.parentNode.children[3].innerText
-    // console.log(price);
-
-    const id = e.target.parentNode.id
-    // console.log(id);
-
-    addtocarts.push({
-      title: title,
-      price: price,
-      id: id
-    })
-    showaddtocart(addtocarts);
-
-  }
-}
-
-const showaddtocart = (addtocarts) => {
-  console.log(addtocarts);
-  // Clear the existing content before adding new items
-  AddToCart.innerHTML = "";
-  addtocarts.forEach(addtocart => { // Iterate over the addtocarts array
-
-    AddToCart.innerHTML += `
-  
-  <div class="bg-[#f0fdf4] p-3 mt-5 rounded-md flex justify-between items-center">
-                    <div>
-                        <h1 class="font-normal text-xl">${addtocart.title}</h1>
-                        <p class="text-gray-300 py-2">${addtocart.price} x 1</p> 
-                    </div>
-                    <div>
-                        <button onclick="handledeletecart(${addtocarts, addtocart.id})" class="text-gray-300 cursor-pointer"> x</button>
-                    </div>
+    for (let plant of plants) {
+        const card = document.createElement("div");
+        card.innerHTML = `
+            <div class="bg-white border border-gray-100 rounded-xl shadow-md p-4 flex flex-col h-full">
+                
+                <!-- Tree Image -->
+                <img class="w-full h-[180px] object-cover rounded-lg mb-3" src="${plant.image}" alt="${plant.name}">
+                
+                <!-- Tree Name (clickable to open modal) -->
+                <button 
+                    onclick="loadTreeDetail('${plant.id}')" 
+                    class="font-semibold text-left text-[#15803D] hover:underline cursor-pointer text-base mb-1">
+                    ${plant.name}
+                </button>
+                
+                <!-- Description -->
+                <p class="text-xs text-gray-500 flex-1 mb-3 line-clamp-2">${plant.description}</p>
+                
+                <!-- Category + Price row -->
+                <div class="flex justify-between items-center mb-3">
+                    <span class="bg-[#DCFCE7] text-[#15803D] text-xs rounded-md px-2 py-1 font-medium">
+                        ${plant.category}
+                    </span>
+                    <span class="font-semibold text-gray-700">$${plant.price}</span>
                 </div>
 
+                <!-- Add to Cart button -->
+                <button 
+                    onclick="addToCart('${plant.id}', '${plant.name}', '${plant.price}')"
+                    class="w-full bg-[#15803D] hover:bg-green-700 transition text-white py-2 rounded-2xl text-sm font-medium cursor-pointer">
+                    🛒 Add to Cart
+                </button>
 
-  
-  `
-
-  })
-}
-
-const handledeletecart = (cardid) => {
-  console.log('button clicked', cardid);
-  const filtereddata = addtocarts.filter(addtocart => addtocart.id !== cardid)
-  
-
-}
-
-
-
-
-
-
-
-const loadplantdetail = (id) => {
-  const url = `https://openapi.programming-hero.com/api/plant/${id}`
-  // console.log(url);
-  fetch(url)
-    .then(res => res.json())
-    .then((detail) => dislplayplamtdetail(detail.plants))
-
+            </div>
+        `;
+        cardContainer.appendChild(card);
+    }
 }
 
 
-const dislplayplamtdetail = (card) => {
-  console.log(card);
-  const detailbox = document.getElementById("detailscontainer")
-  detailbox.innerHTML = `
-   <div>
-        <h1 class="text-lg font-bold">${card.name}</h1>
-    <img class="rounded-md h-[230px] w-[450px] " src="${card.image}" alt="">
-    <p class=""><span class="font-semibold py-2">Category: ${card.category}</span></p>
-    <p class=""><span class="font-semibold py-2">Price:${card.price} </span></p>
-    <p class="py-4"><span class="font-semibold py-1">Description:${card.description} </span>Press ESC key or click the button below to close</p>
-
-    </div>`
-  document.getElementById("my_modal_5").showModal();
-
+function loadTreeDetail(plantId) {
+    showSpinner();
+    fetch(`https://openapi.programming-hero.com/api/plant/${plantId}`)
+        .then(res => res.json())
+        .then(data => {
+            hideSpinner();
+            showTreeDetailModal(data.plants);
+        })
+        .catch(err => {
+            hideSpinner();
+            console.log("Error loading tree detail:", err);
+        });
 }
+
+
+function showTreeDetailModal(tree) {
+    const modalContent = document.getElementById("modal-content");
+
+    modalContent.innerHTML = `
+        <div class="space-y-3">
+            
+            <!-- Tree Image -->
+            <img class="w-full h-[220px] object-cover rounded-xl" src="${tree.image}" alt="${tree.name}">
+            
+            <!-- Tree Name -->
+            <h2 class="text-2xl font-bold text-[#15803D]">${tree.name}</h2>
+            
+            <!-- Category -->
+            <p><span class="font-semibold text-gray-600">Category:</span> 
+               <span class="bg-[#DCFCE7] text-[#15803D] text-sm px-2 py-0.5 rounded-md">${tree.category}</span>
+            </p>
+            
+            <!-- Price -->
+            <p><span class="font-semibold text-gray-600">Price:</span> 
+               <span class="text-[#15803D] font-bold text-lg">$${tree.price}</span>
+            </p>
+            
+            <!-- Description -->
+            <p class="text-sm text-gray-600 leading-relaxed">
+                <span class="font-semibold text-gray-700">Description: </span>${tree.description}
+            </p>
+
+        </div>
+    `;
+
+    document.getElementById("tree-detail-modal").showModal();
+}
+
+
+function addToCart(id, name, price) {
+    const alreadyInCart = cart.find(item => item.id === id);
+
+    if (alreadyInCart) {
+        // If already in cart, just increase the quantity
+        alreadyInCart.quantity += 1;
+    } else {
+        // If new item, add it to the cart array
+        cart.push({
+            id: id,
+            name: name,
+            price: parseFloat(price), // Convert price string to a number
+            quantity: 1
+        });
+    }
+
+    updateCartUI();
+}
+
+
+function removeFromCart(id) {
+    // Filter out the item with this id
+    cart = cart.filter(item => item.id !== id);
+
+    updateCartUI();
+}
+
+
+function updateCartUI() {
+    cartItemsContainer.innerHTML = ""; // Clear old cart content
+
+    // If cart is empty, show a message
+    if (cart.length === 0) {
+        cartItemsContainer.innerHTML = `
+            <p class="text-gray-400 text-sm text-center py-4">Your cart is empty 🌱</p>
+        `;
+        cartTotalElement.textContent = "$0.00";
+        return;
+    }
+
+    let totalPrice = 0;
+
+    // Loop through each cart item and display it
+    for (let item of cart) {
+        // Calculate the price for this item (price x quantity)
+        const itemTotal = item.price * item.quantity;
+        totalPrice += itemTotal; // Add to total
+
+        const cartItemDiv = document.createElement("div");
+        cartItemDiv.innerHTML = `
+            <div class="bg-[#f0fdf4] p-3 mt-3 rounded-lg flex justify-between items-center gap-2">
+                
+                <!-- Item info -->
+                <div class="flex-1">
+                    <p class="font-medium text-sm text-gray-800">${item.name}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">$${item.price.toFixed(2)} × ${item.quantity}</p>
+                </div>
+
+                <!-- Item subtotal + remove button -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[#15803D] text-sm font-semibold">$${itemTotal.toFixed(2)}</span>
+                    <button 
+                        onclick="removeFromCart('${item.id}')"
+                        class="text-red-400 hover:text-red-600 font-bold text-lg cursor-pointer leading-none">
+                        ×
+                    </button>
+                </div>
+
+            </div>
+        `;
+        cartItemsContainer.appendChild(cartItemDiv);
+    }
+
+    // Show the total price
+    cartTotalElement.textContent = "$" + totalPrice.toFixed(2);
+}
+
+
+loadCategories(); // Load the left side category list
+loadAllCards();   // Load all tree cards in the middle
